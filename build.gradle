@@ -1,0 +1,46 @@
+
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
+    id 'distribution'
+}
+
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        url "http://packages.confluent.io/maven/"
+    }
+}
+
+dependencies {
+
+    compileOnly group: 'io.confluent.ksql', name: 'ksql-udf', version: confluent_io_version
+   // compileOnly group: 'org.apache.kafka', name: 'connect-api', version: '2.2.0'
+    compileOnly group: 'org.apache.kafka', name: 'connect-api', version: '5.4.0-ccs-SNAPSHOT'
+
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: lombok_version
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombok_version
+
+    testCompileOnly group: 'org.projectlombok', name: 'lombok', version: lombok_version
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: lombok_version
+}
+
+shadowJar() {
+    dependsOn clean
+}
+
+
+distributions {
+
+    main {
+        baseName = "nbuesing-${project.name}"
+        contents {
+            into("lib/") {
+                from(jar)
+                from(configurations.runtimeClasspath)
+            }
+        }
+    }
+}
