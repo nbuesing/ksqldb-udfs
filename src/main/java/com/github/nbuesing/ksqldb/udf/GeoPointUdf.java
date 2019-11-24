@@ -21,21 +21,21 @@ import org.apache.kafka.connect.data.Struct;
  * mis-interpreted.
  *
  */
-@UdfDescription(name = "geo_point", description = ".")
+@UdfDescription(
+        name = "geo_point",
+        description = "convert location structure to 'lat,lon' string to avoid case issues with elastic"
+)
 @SuppressWarnings("unused")
 public class GeoPointUdf {
 
     private static final String LATITUDE = "LAT";
     private static final String LONGITUDE = "LON";
 
-    private static final Schema SCHEMA = SchemaBuilder.struct().optional()
-            .field(LATITUDE, Schema.FLOAT64_SCHEMA)
-            .field(LONGITUDE, Schema.FLOAT64_SCHEMA)
-            .build();
-
-    @Udf(description = "convert structured location into a string so the location can be indexed by elastic-search.")
-    public String combine(@UdfParameter(schema = "STRUCT<LAT double, LON double>", value = "location", description = "location (lat,lon)") final Struct location) {
+    @Udf(description = "structure of doubles to the string format.")
+    public String combine(
+            @UdfParameter(schema = "STRUCT<LAT double, LON double>",
+                    value = "location",
+                    description = "location (lat,lon)") final Struct location) {
         return location.getFloat64(LATITUDE) + "," + location.getFloat64(LONGITUDE);
     }
-
 }

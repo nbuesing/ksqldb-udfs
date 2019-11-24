@@ -7,18 +7,21 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 
-@UdafDescription(name = "accelerate", description = "acceleration based on velocity (value and time) structure.")
+@UdafDescription(
+        name = "acceleration",
+        description = "acceleration based on velocity (value and time)."
+)
 public final class AccelerationUdf {
 
     private static final String PV = "PV";
-    private static final String CV = "CV";
     private static final String PT = "PT";
+    private static final String CV = "CV";
     private static final String CT = "CT";
 
     private static final Schema STRUCT_DOUBLE = SchemaBuilder.struct().optional()
             .field(PV, Schema.OPTIONAL_FLOAT64_SCHEMA)
-            .field(CV, Schema.OPTIONAL_FLOAT64_SCHEMA)
             .field(PT, Schema.OPTIONAL_INT64_SCHEMA)
+            .field(CV, Schema.OPTIONAL_FLOAT64_SCHEMA)
             .field(CT, Schema.OPTIONAL_INT64_SCHEMA)
             .build();
 
@@ -26,7 +29,7 @@ public final class AccelerationUdf {
     }
 
     @UdafFactory(
-            paramSchema = "STRUCT<VELOCITY double, TS bigint>",
+            paramSchema = "STRUCT<VALUE double, TIMESTAMPED bigint>",
             aggregateSchema = "STRUCT<PV double, CV double, PT bigint, CT bigint>",
             description = "acceleration instance with Double as the mapped output."
     )
@@ -43,9 +46,6 @@ public final class AccelerationUdf {
 
             @Override
             public Struct aggregate(final Struct val, final Struct aggregate) {
-
-                System.out.println("val : " + val);
-                System.out.println("agg : " + aggregate);
 
                 if (val == null) {
                     return aggregate;
@@ -64,7 +64,6 @@ public final class AccelerationUdf {
 
             @Override
             public Struct merge(final Struct aggOne, final Struct aggTwo) {
-//                return aggTwo;
                 return new Struct(STRUCT_DOUBLE)
                         .put(PV, null)
                         .put(CV, null);
@@ -78,7 +77,6 @@ public final class AccelerationUdf {
                 Long previousT = agg.getInt64(PT);
                 Long currentT = agg.getInt64(CT);
 
-
                 if (previous == null || current == null) {
                     return 0.0;
                 }
@@ -90,9 +88,6 @@ public final class AccelerationUdf {
             public Struct undo(final Struct val, final Struct agg) {
                 return agg;
             }
-
         };
     }
-
-
 }
