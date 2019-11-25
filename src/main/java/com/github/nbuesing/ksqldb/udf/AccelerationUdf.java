@@ -18,7 +18,12 @@ public final class AccelerationUdf {
     private static final String CV = "CV";
     private static final String CT = "CT";
 
-    private static final Schema STRUCT_DOUBLE = SchemaBuilder.struct().optional()
+    private static final String VALUE = "VALUE";
+    private static final String TIMESTAMPED = "TIMESTAMPED";
+
+    // make sure this matches UdafFactories 'aggregateSchema' exactly or you will
+    // struct mismatch exception w/out indication of what struct was wrong.
+    private static final Schema STRUCT = SchemaBuilder.struct().optional()
             .field(PV, Schema.OPTIONAL_FLOAT64_SCHEMA)
             .field(PT, Schema.OPTIONAL_INT64_SCHEMA)
             .field(CV, Schema.OPTIONAL_FLOAT64_SCHEMA)
@@ -30,41 +35,33 @@ public final class AccelerationUdf {
 
     @UdafFactory(
             paramSchema = "STRUCT<VALUE double, TIMESTAMPED bigint>",
-            aggregateSchema = "STRUCT<PV double, CV double, PT bigint, CT bigint>",
+            aggregateSchema = "STRUCT<PV double, PT bigint, CV double, CT bigint>",
             description = "acceleration instance with Double as the mapped output."
     )
     public static TableUdaf<Struct, Struct, Double> accelDouble() {
         return new TableUdaf<Struct, Struct, Double>() {
             @Override
             public Struct initialize() {
-                return new Struct(STRUCT_DOUBLE)
+                return new Struct(STRUCT)
                         .put(PV, null)
-                        .put(CV, null)
                         .put(PT, null)
+                        .put(CV, null)
                         .put(CT, null);
             }
 
             @Override
             public Struct aggregate(final Struct val, final Struct aggregate) {
-
-                if (val == null) {
-                    return aggregate;
-                }
-
-                Struct s = new Struct(STRUCT_DOUBLE)
+                return (val != null) ? new Struct(STRUCT)
                         .put(PV, aggregate.getFloat64(CV))
                         .put(PT, aggregate.getInt64(CT))
-                        .put(CV, val.getFloat64("VELOCITY"))
-                        .put(CT, val.getInt64("TS"));
-
-                System.out.println(s);
-
-                return s;
+                        .put(CV, val.getFloat64(VALUE))
+                        .put(CT, val.getInt64(TIMESTAMPED)) : aggregate;
             }
 
             @Override
             public Struct merge(final Struct aggOne, final Struct aggTwo) {
-                return new Struct(STRUCT_DOUBLE)
+                //ignoring merge scenarios.
+                return new Struct(STRUCT)
                         .put(PV, null)
                         .put(CV, null);
             }
